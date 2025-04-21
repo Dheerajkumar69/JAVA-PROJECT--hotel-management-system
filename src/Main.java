@@ -1,223 +1,275 @@
 import javax.swing.*;
 import java.awt.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Main {
+    // Shared data models to avoid duplicate handling in different classes
+    public static List<Room> rooms = new ArrayList<>();
+    public static List<Booking> bookings = new ArrayList<>();
+    public static List<Customer> customers = new ArrayList<>();
+    
     public static void main(String[] args) {
         try {
-            // Set look and feel to system default
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            
-            // Set global UI properties
-            UIManager.put("Button.arc", 15);
-            UIManager.put("Component.arc", 10);
-            UIManager.put("ProgressBar.arc", 10);
-            UIManager.put("TextComponent.arc", 10);
         } catch (Exception e) {
             e.printStackTrace();
         }
         
-        SwingUtilities.invokeLater(() -> {
-            // Start with the login screen
-            new LoginScreen();
-        });
+        // Initialize with sample data
+        initializeSampleData();
+        
+        SwingUtilities.invokeLater(() -> new LoginScreen());
+    }
+    
+    private static void initializeSampleData() {
+        // Initialize rooms
+        rooms.add(new Room("101", "Standard", 100, "Available"));
+        rooms.add(new Room("102", "Standard", 100, "Occupied"));
+        rooms.add(new Room("201", "Deluxe", 150, "Available"));
+        rooms.add(new Room("202", "Deluxe", 150, "Maintenance"));
+        rooms.add(new Room("301", "Suite", 250, "Available"));
+        
+        // Initialize customers
+        customers.add(new Customer("C001", "John Doe", "john@example.com", "555-1234", "123 Main St"));
+        customers.add(new Customer("C002", "Jane Smith", "jane@example.com", "555-5678", "456 Oak Ave"));
+        customers.add(new Customer("C003", "Mike Johnson", "mike@example.com", "555-9012", "789 Pine Rd"));
+        customers.add(new Customer("C004", "Sarah Brown", "sarah@example.com", "555-3456", "321 Maple St"));
+        
+        // Initialize bookings
+        bookings.add(new Booking("B001", "C001", "101", "2023-06-10", "2023-06-15", "Completed"));
+        bookings.add(new Booking("B002", "C002", "202", "2023-06-12", "2023-06-18", "In Progress"));
+        bookings.add(new Booking("B003", "C003", "301", "2023-06-15", "2023-06-20", "Confirmed"));
+        bookings.add(new Booking("B004", "C004", "102", "2023-06-18", "2023-06-22", "Confirmed"));
     }
 }
 
-class LoginScreen extends JFrame {
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JComboBox<String> userTypeComboBox;
+// Model classes
+class Room {
+    private String roomNumber;
+    private String type;
+    private double price;
+    private String status;
     
+    public Room(String roomNumber, String type, double price, String status) {
+        this.roomNumber = roomNumber;
+        this.type = type;
+        this.price = price;
+        this.status = status;
+    }
+    
+    public String getRoomNumber() { return roomNumber; }
+    public String getType() { return type; }
+    public double getPrice() { return price; }
+    public String getStatus() { return status; }
+    
+    public void setType(String type) { this.type = type; }
+    public void setPrice(double price) { this.price = price; }
+    public void setStatus(String status) { this.status = status; }
+}
+
+class Customer {
+    private String customerId;
+    private String name;
+    private String email;
+    private String phone;
+    private String address;
+    
+    public Customer(String customerId, String name, String email, String phone, String address) {
+        this.customerId = customerId;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+    }
+    
+    public String getCustomerId() { return customerId; }
+    public String getName() { return name; }
+    public String getEmail() { return email; }
+    public String getPhone() { return phone; }
+    public String getAddress() { return address; }
+    
+    public void setName(String name) { this.name = name; }
+    public void setEmail(String email) { this.email = email; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public void setAddress(String address) { this.address = address; }
+}
+
+class Booking {
+    private String bookingId;
+    private String customerId;
+    private String roomNumber;
+    private String checkInDate;
+    private String checkOutDate;
+    private String status;
+    
+    public Booking(String bookingId, String customerId, String roomNumber, String checkInDate, String checkOutDate, String status) {
+        this.bookingId = bookingId;
+        this.customerId = customerId;
+        this.roomNumber = roomNumber;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.status = status;
+    }
+    
+    public String getBookingId() { return bookingId; }
+    public String getCustomerId() { return customerId; }
+    public String getRoomNumber() { return roomNumber; }
+    public String getCheckInDate() { return checkInDate; }
+    public String getCheckOutDate() { return checkOutDate; }
+    public String getStatus() { return status; }
+    
+    public void setStatus(String status) { this.status = status; }
+}
+
+class LoginScreen extends JFrame {
     public LoginScreen() {
         setTitle("Hotel Management System - Login");
-        setSize(450, 350);
+        setSize(400, 300);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // Create main panel with a nice background color
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout());
-        mainPanel.setBackground(UIUtils.BACKGROUND_COLOR);
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
         
-        // Create header panel with gradient
-        JPanel headerPanel = UIUtils.createGradientPanel(UIUtils.PRIMARY_COLOR, UIUtils.SECONDARY_COLOR);
-        headerPanel.setPreferredSize(new Dimension(450, 70));
-        headerPanel.setLayout(new BorderLayout());
-        
-        JLabel titleLabel = new JLabel("  Hotel Management System");
-        titleLabel.setFont(UIUtils.TITLE_FONT);
-        titleLabel.setForeground(Color.WHITE);
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
-        
-        // Create login panel
-        JPanel loginPanel = new JPanel();
-        loginPanel.setLayout(null); // Using absolute positioning for login components
-        loginPanel.setBackground(UIUtils.BACKGROUND_COLOR);
-        
-        // Add a decorative element
-        JPanel decorPanel = new JPanel();
-        decorPanel.setBackground(UIUtils.ACCENT_COLOR);
-        decorPanel.setBounds(0, 0, 5, 280);
-        loginPanel.add(decorPanel);
+        JLabel titleLabel = new JLabel("Hotel Management System", JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         
         JLabel userTypeLabel = new JLabel("Login as:");
-        userTypeLabel.setFont(UIUtils.REGULAR_FONT);
-        userTypeLabel.setBounds(100, 30, 80, 25);
-        
-        String[] userTypes = {"Hotel Staff", "Customer"};
-        userTypeComboBox = new JComboBox<>(userTypes);
-        userTypeComboBox.setBounds(180, 30, 150, 30);
-        UIUtils.styleComboBox(userTypeComboBox);
+        String[] userTypes = {"Staff", "Customer"};
+        JComboBox<String> userTypeCombo = new JComboBox<>(userTypes);
         
         JLabel usernameLabel = new JLabel("Username:");
-        usernameLabel.setFont(UIUtils.REGULAR_FONT);
-        usernameLabel.setBounds(100, 80, 80, 25);
-        
-        usernameField = new JTextField();
-        usernameField.setBounds(180, 80, 150, 30);
-        UIUtils.styleTextField(usernameField);
+        JTextField usernameField = new JTextField();
         
         JLabel passwordLabel = new JLabel("Password:");
-        passwordLabel.setFont(UIUtils.REGULAR_FONT);
-        passwordLabel.setBounds(100, 130, 80, 25);
-        
-        passwordField = new JPasswordField();
-        passwordField.setBounds(180, 130, 150, 30);
-        UIUtils.stylePasswordField(passwordField);
+        JPasswordField passwordField = new JPasswordField();
         
         JButton loginButton = new JButton("Login");
-        loginButton.setBounds(180, 190, 150, 40);
-        UIUtils.stylePrimaryButton(loginButton);
+        loginButton.addActionListener(e -> {
+            String userType = (String) userTypeCombo.getSelectedItem();
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
+            
+            if (authenticate(userType, username, password)) {
+                dispose();
+                if (userType.equals("Staff")) {
+                    new StaffDashboard();
+                } else {
+                    new CustomerDashboard(username);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid credentials!");
+            }
+        });
         
-        loginButton.addActionListener(e -> authenticateUser());
+        passwordField.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    loginButton.doClick();
+                }
+            }
+        });
         
-        loginPanel.add(userTypeLabel);
-        loginPanel.add(userTypeComboBox);
-        loginPanel.add(usernameLabel);
-        loginPanel.add(usernameField);
-        loginPanel.add(passwordLabel);
-        loginPanel.add(passwordField);
-        loginPanel.add(loginButton);
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
         
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
-        mainPanel.add(loginPanel, BorderLayout.CENTER);
+        panel.add(userTypeLabel);
+        panel.add(userTypeCombo);
+        panel.add(usernameLabel);
+        panel.add(usernameField);
+        panel.add(passwordLabel);
+        panel.add(passwordField);
+        panel.add(new JLabel(""));
+        panel.add(loginButton);
         
-        // Make window slightly rounded
-        setUndecorated(true);
-        setShape(new RoundRectangle2D.Double(0, 0, 450, 350, 15, 15));
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(titlePanel, BorderLayout.NORTH);
+        getContentPane().add(panel, BorderLayout.CENTER);
         
-        add(mainPanel);
         setVisible(true);
     }
     
-    private void authenticateUser() {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
-        String userType = (String) userTypeComboBox.getSelectedItem();
-        
-        // Simple authentication for demonstration
-        if (userType.equals("Hotel Staff") && username.equals("admin") && password.equals("admin123")) {
-            JOptionPane.showMessageDialog(this, "Staff login successful!");
-            dispose(); // Close login window
-            new StaffDashboard(); // Open staff dashboard
-        } else if (userType.equals("Customer") && username.equals("user") && password.equals("user123")) {
-            JOptionPane.showMessageDialog(this, "Customer login successful!");
-            dispose(); // Close login window
-            new CustomerDashboard(); // Open customer dashboard
-        } else {
-            JOptionPane.showMessageDialog(this, "Invalid credentials!", "Login Error", JOptionPane.ERROR_MESSAGE);
+    private boolean authenticate(String userType, String username, String password) {
+        if (userType.equals("Staff") && username.equals("admin") && password.equals("admin123")) {
+            return true;
+        } else if (userType.equals("Customer")) {
+            for (Customer customer : Main.customers) {
+                if (customer.getCustomerId().equals(username) && password.equals("user123")) {
+                    return true;
+                }
+            }
         }
+        return false;
     }
 }
 
 class StaffDashboard extends JFrame {
-    private JPanel mainPanel;
-    private CardLayout cardLayout;
-    private JPanel cardsPanel;
+    private JPanel contentPanel;
     
     public StaffDashboard() {
         setTitle("Hotel Management System - Staff Dashboard");
-        setSize(900, 650);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(UIUtils.BACKGROUND_COLOR);
+        JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Create header panel with gradient
-        JPanel headerPanel = UIUtils.createGradientPanel(UIUtils.PRIMARY_COLOR, UIUtils.SECONDARY_COLOR);
-        headerPanel.setLayout(new BorderLayout());
-        headerPanel.setPreferredSize(new Dimension(900, 70));
+        // Create header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(41, 128, 185));
+        headerPanel.setPreferredSize(new Dimension(800, 50));
         
-        JLabel titleLabel = new JLabel("  Staff Dashboard");
-        titleLabel.setFont(UIUtils.TITLE_FONT);
+        JLabel titleLabel = new JLabel("Staff Dashboard");
         titleLabel.setForeground(Color.WHITE);
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
         
         JButton logoutButton = new JButton("Logout");
-        UIUtils.styleSecondaryButton(logoutButton);
         logoutButton.addActionListener(e -> logout());
-        JPanel logoutPanel = new JPanel();
-        logoutPanel.setOpaque(false);
-        logoutPanel.add(logoutButton);
-        headerPanel.add(logoutPanel, BorderLayout.EAST);
         
-        // Create sidebar panel
-        JPanel sidebarPanel = UIUtils.createSidebarPanel();
-        sidebarPanel.setPreferredSize(new Dimension(220, 650));
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(logoutButton, BorderLayout.EAST);
         
-        // Add logo or icon at the top of sidebar
-        JPanel logoPanel = new JPanel();
-        logoPanel.setBackground(UIUtils.DARK_BACKGROUND);
-        logoPanel.setMaximumSize(new Dimension(220, 80));
-        logoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        JLabel logoLabel = new JLabel("HMS");
-        logoLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        logoLabel.setForeground(Color.WHITE);
-        logoPanel.add(logoLabel);
-        sidebarPanel.add(logoPanel);
-        sidebarPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        // Create sidebar
+        JPanel sidebarPanel = new JPanel();
+        sidebarPanel.setLayout(new BoxLayout(sidebarPanel, BoxLayout.Y_AXIS));
+        sidebarPanel.setBackground(new Color(52, 73, 94));
+        sidebarPanel.setPreferredSize(new Dimension(180, 600));
         
         // Add menu buttons
-        String[] menuItems = {"Dashboard", "Room Management", "Bookings", "Check-in/Check-out", "Customers", "Billing", "Reports"};
-        for (String menuItem : menuItems) {
-            JButton menuButton = UIUtils.createSidebarButton("  " + menuItem);
-            menuButton.setMaximumSize(new Dimension(220, 45));
+        String[] menuItems = {"Dashboard", "Rooms", "Bookings", "Customers", "Reports"};
+        for (String item : menuItems) {
+            JButton menuButton = new JButton(item);
+            menuButton.setMaximumSize(new Dimension(180, 40));
             menuButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-            
-            menuButton.addActionListener(e -> switchPanel(menuItem));
-            
+            menuButton.addActionListener(e -> switchPanel(item));
             sidebarPanel.add(menuButton);
             sidebarPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
         
-        // Create cards panel for different sections
-        cardLayout = new CardLayout();
-        cardsPanel = new JPanel(cardLayout);
-        
-        // Add different panels for each section
-        cardsPanel.add(createDashboardPanel(), "Dashboard");
-        cardsPanel.add(createRoomManagementPanel(), "Room Management");
-        cardsPanel.add(createBookingsPanel(), "Bookings");
-        cardsPanel.add(createCheckInOutPanel(), "Check-in/Check-out");
-        cardsPanel.add(createCustomersPanel(), "Customers");
-        cardsPanel.add(createBillingPanel(), "Billing");
-        cardsPanel.add(createReportsPanel(), "Reports");
+        // Create content panel
+        contentPanel = new JPanel(new CardLayout());
+        contentPanel.add(createDashboardPanel(), "Dashboard");
+        contentPanel.add(createRoomsPanel(), "Rooms");
+        contentPanel.add(createBookingsPanel(), "Bookings");
+        contentPanel.add(createCustomersPanel(), "Customers");
+        contentPanel.add(createReportsPanel(), "Reports");
         
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(sidebarPanel, BorderLayout.WEST);
-        mainPanel.add(cardsPanel, BorderLayout.CENTER);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
         
         add(mainPanel);
         setVisible(true);
     }
     
     private void switchPanel(String panelName) {
-        cardLayout.show(cardsPanel, panelName);
+        CardLayout cl = (CardLayout) contentPanel.getLayout();
+        cl.show(contentPanel, panelName);
     }
     
     private void logout() {
@@ -227,600 +279,1140 @@ class StaffDashboard extends JFrame {
     
     private JPanel createDashboardPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtils.BACKGROUND_COLOR);
         
-        JLabel overviewLabel = new JLabel("  Dashboard Overview");
-        overviewLabel.setFont(UIUtils.SUBTITLE_FONT);
-        overviewLabel.setForeground(UIUtils.TEXT_COLOR);
-        overviewLabel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        JLabel titleLabel = new JLabel("Dashboard Overview");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        JPanel statsPanel = new JPanel(new GridLayout(2, 2, 20, 20));
+        JPanel statsPanel = new JPanel(new GridLayout(2, 2, 15, 15));
         statsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        statsPanel.setBackground(UIUtils.BACKGROUND_COLOR);
         
-        // Add stat cards using UIUtils
-        statsPanel.add(UIUtils.createStatCard("Available Rooms", "15", UIUtils.SUCCESS_COLOR));
-        statsPanel.add(UIUtils.createStatCard("Occupied Rooms", "25", UIUtils.SECONDARY_COLOR));
-        statsPanel.add(UIUtils.createStatCard("Reservations Today", "8", UIUtils.ACCENT_COLOR));
-        statsPanel.add(UIUtils.createStatCard("Pending Checkouts", "5", UIUtils.WARNING_COLOR));
+        // Count available and occupied rooms
+        int availableRooms = 0;
+        int occupiedRooms = 0;
+        for (Room room : Main.rooms) {
+            if (room.getStatus().equals("Available")) {
+                availableRooms++;
+            } else if (room.getStatus().equals("Occupied")) {
+                occupiedRooms++;
+            }
+        }
         
-        // Add a welcome message panel
-        JPanel welcomePanel = new JPanel(new BorderLayout());
-        welcomePanel.setBackground(Color.WHITE);
-        welcomePanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
+        // Count today's bookings and pending checkouts (for simplicity, just use the bookings list)
+        int todayBookings = Main.bookings.size() > 2 ? 2 : Main.bookings.size();
+        int pendingCheckouts = 1; // Just for demonstration
         
-        JLabel welcomeLabel = new JLabel("Welcome back, Admin!");
-        welcomeLabel.setFont(UIUtils.HEADING_FONT);
-        welcomePanel.add(welcomeLabel, BorderLayout.WEST);
+        statsPanel.add(createStatCard("Available Rooms", String.valueOf(availableRooms)));
+        statsPanel.add(createStatCard("Occupied Rooms", String.valueOf(occupiedRooms)));
+        statsPanel.add(createStatCard("Bookings Today", String.valueOf(todayBookings)));
+        statsPanel.add(createStatCard("Pending Checkouts", String.valueOf(pendingCheckouts)));
         
-        JLabel dateLabel = new JLabel(new java.text.SimpleDateFormat("EEEE, MMMM d, yyyy").format(new java.util.Date()));
-        dateLabel.setFont(UIUtils.REGULAR_FONT);
-        dateLabel.setForeground(new Color(150, 150, 150));
-        welcomePanel.add(dateLabel, BorderLayout.EAST);
-        
-        panel.add(welcomePanel, BorderLayout.NORTH);
+        panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(statsPanel, BorderLayout.CENTER);
         
         return panel;
     }
     
-    private JPanel createRoomManagementPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtils.BACKGROUND_COLOR);
+    private JPanel createStatCard(String title, String value) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        card.setBackground(Color.WHITE);
         
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
+        
+        JLabel valueLabel = new JLabel(value, JLabel.CENTER);
+        valueLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(valueLabel, BorderLayout.CENTER);
+        
+        return card;
+    }
+    
+    private JPanel createRoomsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
         
         JLabel titleLabel = new JLabel("Room Management");
-        titleLabel.setFont(UIUtils.SUBTITLE_FONT);
-        titleLabel.setForeground(UIUtils.TEXT_COLOR);
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create search field
-        JTextField searchField = new JTextField(15);
-        UIUtils.styleTextField(searchField);
-        searchField.putClientProperty("JTextField.placeholderText", "Search rooms...");
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        searchPanel.setOpaque(false);
-        searchPanel.add(searchField);
+        // Create table model from rooms list
+        String[] columnNames = {"Room No", "Type", "Price", "Status"};
+        Object[][] data = new Object[Main.rooms.size()][4];
         
-        // Add search button with functionality
-        JButton searchButton = new JButton("Search");
-        UIUtils.styleSecondaryButton(searchButton);
-        searchButton.addActionListener(e -> {
-            String searchTerm = searchField.getText().trim().toLowerCase();
-            JOptionPane.showMessageDialog(null, "Searching for: " + searchTerm, "Search", JOptionPane.INFORMATION_MESSAGE);
-            // In a real application, this would filter the table data
-        });
-        searchPanel.add(searchButton);
-        headerPanel.add(searchPanel, BorderLayout.EAST);
-        
-        // Create table for room list
-        String[] columnNames = {"Room No", "Type", "Price", "Status", "Actions"};
-        Object[][] data = {
-            {"101", "Standard", "$100", "Available", "Edit/Delete"},
-            {"102", "Standard", "$100", "Occupied", "Edit/Delete"},
-            {"201", "Deluxe", "$150", "Available", "Edit/Delete"},
-            {"202", "Deluxe", "$150", "Maintenance", "Edit/Delete"},
-            {"301", "Suite", "$250", "Available", "Edit/Delete"}
-        };
+        for (int i = 0; i < Main.rooms.size(); i++) {
+            Room room = Main.rooms.get(i);
+            data[i][0] = room.getRoomNumber();
+            data[i][1] = room.getType();
+            data[i][2] = "$" + room.getPrice();
+            data[i][3] = room.getStatus();
+        }
         
         JTable table = new JTable(data, columnNames);
-        UIUtils.styleTable(table);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
-        // Custom renderer for status column
-        table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                
-                if (value != null) {
-                    String status = value.toString();
-                    if (status.equals("Available")) {
-                        c.setForeground(UIUtils.SUCCESS_COLOR);
-                    } else if (status.equals("Occupied")) {
-                        c.setForeground(UIUtils.SECONDARY_COLOR);
-                    } else if (status.equals("Maintenance")) {
-                        c.setForeground(UIUtils.WARNING_COLOR);
-                    }
-                }
-                
-                return c;
-            }
-        });
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
-        // Add action renderer for the Actions column
-        table.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-                panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-                
-                JButton editButton = new JButton("Edit");
-                editButton.setFont(UIUtils.SMALL_FONT);
-                editButton.setMargin(new Insets(2, 5, 2, 5));
-                
-                JButton deleteButton = new JButton("Delete");
-                deleteButton.setFont(UIUtils.SMALL_FONT);
-                deleteButton.setMargin(new Insets(2, 5, 2, 5));
-                
-                panel.add(editButton);
-                panel.add(deleteButton);
-                return panel;
-            }
-        });
+        JButton addButton = new JButton("Add Room");
+        JButton editButton = new JButton("Edit Room");
+        JButton deleteButton = new JButton("Delete Room");
+        JButton allocateButton = new JButton("Allocate Room"); // New button for room allocation
         
-        // Add mouse listener to handle button clicks in the table
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = table.rowAtPoint(e.getPoint());
-                int col = table.columnAtPoint(e.getPoint());
-                
-                if (col == 4) { // Actions column
-                    // Get the room number from the first column
-                    String roomNumber = table.getValueAt(row, 0).toString();
-                    String roomType = table.getValueAt(row, 1).toString();
-                    String roomPrice = table.getValueAt(row, 2).toString();
-                    String roomStatus = table.getValueAt(row, 3).toString();
+        // Implement Add Room functionality
+        addButton.addActionListener(e -> {
+            JTextField roomNumberField = new JTextField();
+            JComboBox<String> roomTypeCombo = new JComboBox<>(new String[]{"Standard", "Deluxe", "Suite"});
+            JTextField priceField = new JTextField();
+            JComboBox<String> statusCombo = new JComboBox<>(new String[]{"Available", "Occupied", "Maintenance"});
+            
+            JPanel inputPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+            inputPanel.add(new JLabel("Room Number:"));
+            inputPanel.add(roomNumberField);
+            inputPanel.add(new JLabel("Room Type:"));
+            inputPanel.add(roomTypeCombo);
+            inputPanel.add(new JLabel("Price:"));
+            inputPanel.add(priceField);
+            inputPanel.add(new JLabel("Status:"));
+            inputPanel.add(statusCombo);
+            
+            int result = JOptionPane.showConfirmDialog(panel, inputPanel, "Add New Room", 
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    String roomNumber = roomNumberField.getText();
+                    String roomType = (String) roomTypeCombo.getSelectedItem();
+                    double price = Double.parseDouble(priceField.getText());
+                    String status = (String) statusCombo.getSelectedItem();
                     
-                    // Calculate which button was clicked (Edit or Delete)
-                    int buttonWidth = 50; // Approximate width of each button
-                    int x = e.getX() - table.getCellRect(row, col, false).x;
-                    
-                    if (x < buttonWidth) {
-                        // Edit button clicked
-                        showRoomEditDialog(roomNumber, roomType, roomPrice, roomStatus);
-                    } else {
-                        // Delete button clicked
-                        int confirm = JOptionPane.showConfirmDialog(
-                            null,
-                            "Are you sure you want to delete Room " + roomNumber + "?",
-                            "Confirm Deletion",
-                            JOptionPane.YES_NO_OPTION
-                        );
-                        
-                        if (confirm == JOptionPane.YES_OPTION) {
-                            JOptionPane.showMessageDialog(null, "Room " + roomNumber + " has been deleted.");
-                            // Here you would actually remove the room from the database
+                    // Check if room number already exists
+                    boolean roomExists = false;
+                    for (Room r : Main.rooms) {
+                        if (r.getRoomNumber().equals(roomNumber)) {
+                            roomExists = true;
+                            break;
                         }
                     }
+                    
+                    if (roomExists) {
+                        JOptionPane.showMessageDialog(panel, "Room number already exists!");
+                    } else {
+                        Main.rooms.add(new Room(roomNumber, roomType, price, status));
+                        JOptionPane.showMessageDialog(panel, "Room added successfully!");
+                        
+                        // Refresh the panel
+                        contentPanel.remove(panel);
+                        contentPanel.add(createRoomsPanel(), "Rooms");
+                        switchPanel("Rooms");
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(panel, "Invalid price format!");
                 }
             }
         });
         
-        JScrollPane scrollPane = new JScrollPane(table);
-        UIUtils.styleScrollPane(scrollPane);
+        // Implement Edit Room functionality
+        editButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a room to edit!");
+                return;
+            }
+            
+            Room selectedRoom = Main.rooms.get(selectedRow);
+            
+            JTextField roomNumberField = new JTextField(selectedRoom.getRoomNumber());
+            roomNumberField.setEditable(false); // Room number can't be changed
+            
+            JComboBox<String> roomTypeCombo = new JComboBox<>(new String[]{"Standard", "Deluxe", "Suite"});
+            roomTypeCombo.setSelectedItem(selectedRoom.getType());
+            
+            JTextField priceField = new JTextField(String.valueOf(selectedRoom.getPrice()));
+            
+            JComboBox<String> statusCombo = new JComboBox<>(new String[]{"Available", "Occupied", "Maintenance"});
+            statusCombo.setSelectedItem(selectedRoom.getStatus());
+            
+            JPanel inputPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+            inputPanel.add(new JLabel("Room Number:"));
+            inputPanel.add(roomNumberField);
+            inputPanel.add(new JLabel("Room Type:"));
+            inputPanel.add(roomTypeCombo);
+            inputPanel.add(new JLabel("Price:"));
+            inputPanel.add(priceField);
+            inputPanel.add(new JLabel("Status:"));
+            inputPanel.add(statusCombo);
+            
+            int result = JOptionPane.showConfirmDialog(panel, inputPanel, "Edit Room", 
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    String roomType = (String) roomTypeCombo.getSelectedItem();
+                    double price = Double.parseDouble(priceField.getText());
+                    String status = (String) statusCombo.getSelectedItem();
+                    
+                    selectedRoom.setType(roomType);
+                    selectedRoom.setPrice(price);
+                    selectedRoom.setStatus(status);
+                    
+                    JOptionPane.showMessageDialog(panel, "Room updated successfully!");
+                    
+                    // Refresh the panel
+                    contentPanel.remove(panel);
+                    contentPanel.add(createRoomsPanel(), "Rooms");
+                    switchPanel("Rooms");
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(panel, "Invalid price format!");
+                }
+            }
+        });
         
-        // Create button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Implement Delete Room functionality
+        deleteButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a room to delete!");
+                return;
+            }
+            
+            Room selectedRoom = Main.rooms.get(selectedRow);
+            
+            // Check if room is in any bookings
+            boolean roomInBookings = false;
+            for (Booking booking : Main.bookings) {
+                if (booking.getRoomNumber().equals(selectedRoom.getRoomNumber())) {
+                    roomInBookings = true;
+                    break;
+                }
+            }
+            
+            if (roomInBookings) {
+                JOptionPane.showMessageDialog(panel, "Cannot delete room as it has bookings associated with it!");
+            } else {
+                int confirm = JOptionPane.showConfirmDialog(panel, 
+                        "Are you sure you want to delete Room " + selectedRoom.getRoomNumber() + "?", 
+                        "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+                
+                if (confirm == JOptionPane.YES_OPTION) {
+                    Main.rooms.remove(selectedRow);
+                    JOptionPane.showMessageDialog(panel, "Room deleted successfully!");
+                    
+                    // Refresh the panel
+                    contentPanel.remove(panel);
+                    contentPanel.add(createRoomsPanel(), "Rooms");
+                    switchPanel("Rooms");
+                }
+            }
+        });
         
-        JButton addButton = new JButton("Add New Room");
-        UIUtils.stylePrimaryButton(addButton);
-        addButton.addActionListener(e -> showAddRoomDialog());
+        // Implement Room Allocation functionality
+        allocateButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a room to allocate!");
+                return;
+            }
+            
+            Room selectedRoom = Main.rooms.get(selectedRow);
+            
+            if (!selectedRoom.getStatus().equals("Available")) {
+                JOptionPane.showMessageDialog(panel, "This room is not available for allocation!");
+                return;
+            }
+            
+            // Create a combo box with customer names
+            JComboBox<String> customerCombo = new JComboBox<>();
+            Map<String, String> customerMap = new HashMap<>(); // To store displayed name -> customer ID mapping
+            
+            for (Customer customer : Main.customers) {
+                String displayName = customer.getName() + " (" + customer.getCustomerId() + ")";
+                customerCombo.addItem(displayName);
+                customerMap.put(displayName, customer.getCustomerId());
+            }
+            
+            JTextField checkInField = new JTextField(java.time.LocalDate.now().toString());
+            JTextField checkOutField = new JTextField(java.time.LocalDate.now().plusDays(1).toString());
+            
+            JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+            inputPanel.add(new JLabel("Customer:"));
+            inputPanel.add(customerCombo);
+            inputPanel.add(new JLabel("Check-in Date:"));
+            inputPanel.add(checkInField);
+            inputPanel.add(new JLabel("Check-out Date:"));
+            inputPanel.add(checkOutField);
+            
+            int result = JOptionPane.showConfirmDialog(panel, inputPanel, "Allocate Room", 
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                String selectedCustomerDisplay = (String) customerCombo.getSelectedItem();
+                String customerId = customerMap.get(selectedCustomerDisplay);
+                String checkIn = checkInField.getText();
+                String checkOut = checkOutField.getText();
+                
+                // Generate a new booking ID
+                String bookingId = "B" + String.format("%03d", Main.bookings.size() + 1);
+                
+                // Create new booking
+                Main.bookings.add(new Booking(bookingId, customerId, selectedRoom.getRoomNumber(), checkIn, checkOut, "Confirmed"));
+                
+                // Update room status
+                selectedRoom.setStatus("Occupied");
+                
+                JOptionPane.showMessageDialog(panel, "Room allocated successfully!\nBooking ID: " + bookingId);
+                
+                // Refresh the panel
+                contentPanel.remove(panel);
+                contentPanel.add(createRoomsPanel(), "Rooms");
+                switchPanel("Rooms");
+            }
+        });
+        
         buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(allocateButton);
         
-        panel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
-    }
-    
-    // Dialog to edit a room
-    private void showRoomEditDialog(String roomNumber, String roomType, String roomPrice, String roomStatus) {
-        JDialog dialog = new JDialog(this, "Edit Room", true);
-        dialog.setSize(400, 300);
-        dialog.setLocationRelativeTo(this);
-        
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        
-        // Room number (disabled as it's the primary key)
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Room Number:"), gbc);
-        
-        gbc.gridx = 1;
-        JTextField roomNumberField = new JTextField(roomNumber);
-        roomNumberField.setEditable(false);
-        panel.add(roomNumberField, gbc);
-        
-        // Room type
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Room Type:"), gbc);
-        
-        gbc.gridx = 1;
-        String[] types = {"Standard", "Deluxe", "Suite"};
-        JComboBox<String> typeCombo = new JComboBox<>(types);
-        typeCombo.setSelectedItem(roomType);
-        panel.add(typeCombo, gbc);
-        
-        // Room price
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Price:"), gbc);
-        
-        gbc.gridx = 1;
-        JTextField priceField = new JTextField(roomPrice.replace("$", ""));
-        panel.add(priceField, gbc);
-        
-        // Room status
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Status:"), gbc);
-        
-        gbc.gridx = 1;
-        String[] statuses = {"Available", "Occupied", "Maintenance"};
-        JComboBox<String> statusCombo = new JComboBox<>(statuses);
-        statusCombo.setSelectedItem(roomStatus);
-        panel.add(statusCombo, gbc);
-        
-        // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton saveButton = new JButton("Save");
-        UIUtils.stylePrimaryButton(saveButton);
-        saveButton.addActionListener(e -> {
-            JOptionPane.showMessageDialog(dialog, "Room " + roomNumber + " updated successfully!");
-            dialog.dispose();
-        });
-        
-        JButton cancelButton = new JButton("Cancel");
-        UIUtils.styleSecondaryButton(cancelButton);
-        cancelButton.addActionListener(e -> dialog.dispose());
-        
-        buttonPanel.add(saveButton);
-        buttonPanel.add(cancelButton);
-        
-        dialog.setLayout(new BorderLayout());
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
-        dialog.setVisible(true);
-    }
-    
-    // Dialog to add a new room
-    private void showAddRoomDialog() {
-        JDialog dialog = new JDialog(this, "Add New Room", true);
-        dialog.setSize(400, 300);
-        dialog.setLocationRelativeTo(this);
-        
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        
-        // Room number
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Room Number:"), gbc);
-        
-        gbc.gridx = 1;
-        JTextField roomNumberField = new JTextField();
-        panel.add(roomNumberField, gbc);
-        
-        // Room type
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Room Type:"), gbc);
-        
-        gbc.gridx = 1;
-        String[] types = {"Standard", "Deluxe", "Suite"};
-        JComboBox<String> typeCombo = new JComboBox<>(types);
-        panel.add(typeCombo, gbc);
-        
-        // Room price
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Price:"), gbc);
-        
-        gbc.gridx = 1;
-        JTextField priceField = new JTextField();
-        panel.add(priceField, gbc);
-        
-        // Room status
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Status:"), gbc);
-        
-        gbc.gridx = 1;
-        String[] statuses = {"Available", "Occupied", "Maintenance"};
-        JComboBox<String> statusCombo = new JComboBox<>(statuses);
-        panel.add(statusCombo, gbc);
-        
-        // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton saveButton = new JButton("Save");
-        UIUtils.stylePrimaryButton(saveButton);
-        saveButton.addActionListener(e -> {
-            String roomNumber = roomNumberField.getText();
-            if (roomNumber.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Room number cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            JOptionPane.showMessageDialog(dialog, "Room " + roomNumber + " added successfully!");
-            dialog.dispose();
-        });
-        
-        JButton cancelButton = new JButton("Cancel");
-        UIUtils.styleSecondaryButton(cancelButton);
-        cancelButton.addActionListener(e -> dialog.dispose());
-        
-        buttonPanel.add(saveButton);
-        buttonPanel.add(cancelButton);
-        
-        dialog.setLayout(new BorderLayout());
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
-        dialog.setVisible(true);
     }
     
     private JPanel createBookingsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
         
-        JLabel titleLabel = new JLabel("  Bookings Management");
+        JLabel titleLabel = new JLabel("Bookings");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(titleLabel, BorderLayout.NORTH);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create table for bookings
-        String[] columnNames = {"Booking ID", "Customer", "Room", "Check-in", "Check-out", "Status", "Actions"};
-        Object[][] data = {
-            {"B001", "John Doe", "101", "2023-06-10", "2023-06-15", "Confirmed", "View/Edit"},
-            {"B002", "Jane Smith", "202", "2023-06-12", "2023-06-14", "Checked-in", "View/Edit"},
-            {"B003", "Mike Johnson", "301", "2023-06-15", "2023-06-20", "Pending", "View/Edit"}
-        };
+        // Create table model from bookings list
+        String[] columnNames = {"Booking ID", "Guest", "Room", "Check-in", "Check-out", "Status"};
+        Object[][] data = new Object[Main.bookings.size()][6];
+        
+        for (int i = 0; i < Main.bookings.size(); i++) {
+            Booking booking = Main.bookings.get(i);
+            data[i][0] = booking.getBookingId();
+            
+            // Find customer name
+            String guestName = "Unknown";
+            for (Customer customer : Main.customers) {
+                if (customer.getCustomerId().equals(booking.getCustomerId())) {
+                    guestName = customer.getName();
+                    break;
+                }
+            }
+            
+            data[i][1] = guestName;
+            data[i][2] = booking.getRoomNumber();
+            data[i][3] = booking.getCheckInDate();
+            data[i][4] = booking.getCheckOutDate();
+            data[i][5] = booking.getStatus();
+        }
         
         JTable table = new JTable(data, columnNames);
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
-        // Create button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addButton = new JButton("New Booking");
-        buttonPanel.add(addButton);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        JButton viewButton = new JButton("View Details");
+        JButton checkInButton = new JButton("Check In");
+        JButton checkOutButton = new JButton("Check Out");
+        JButton cancelButton = new JButton("Cancel Booking");
         
-        return panel;
-    }
-    
-    private JPanel createCheckInOutPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
+        // Implement View Details functionality
+        viewButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a booking to view!");
+                return;
+            }
+            
+            Booking selectedBooking = Main.bookings.get(selectedRow);
+            
+            // Find customer
+            Customer bookingCustomer = null;
+            for (Customer customer : Main.customers) {
+                if (customer.getCustomerId().equals(selectedBooking.getCustomerId())) {
+                    bookingCustomer = customer;
+                    break;
+                }
+            }
+            
+            // Find room
+            Room bookingRoom = null;
+            for (Room room : Main.rooms) {
+                if (room.getRoomNumber().equals(selectedBooking.getRoomNumber())) {
+                    bookingRoom = room;
+                    break;
+                }
+            }
+            
+            StringBuilder details = new StringBuilder();
+            details.append("Booking ID: ").append(selectedBooking.getBookingId()).append("\n");
+            details.append("Status: ").append(selectedBooking.getStatus()).append("\n\n");
+            
+            details.append("Guest Information:\n");
+            if (bookingCustomer != null) {
+                details.append("Name: ").append(bookingCustomer.getName()).append("\n");
+                details.append("Email: ").append(bookingCustomer.getEmail()).append("\n");
+                details.append("Phone: ").append(bookingCustomer.getPhone()).append("\n");
+                details.append("Address: ").append(bookingCustomer.getAddress()).append("\n\n");
+            } else {
+                details.append("Guest information not found.\n\n");
+            }
+            
+            details.append("Room Information:\n");
+            if (bookingRoom != null) {
+                details.append("Room Number: ").append(bookingRoom.getRoomNumber()).append("\n");
+                details.append("Type: ").append(bookingRoom.getType()).append("\n");
+                details.append("Price: $").append(bookingRoom.getPrice()).append(" per night\n\n");
+            } else {
+                details.append("Room information not found.\n\n");
+            }
+            
+            details.append("Dates:\n");
+            details.append("Check-in: ").append(selectedBooking.getCheckInDate()).append("\n");
+            details.append("Check-out: ").append(selectedBooking.getCheckOutDate()).append("\n");
+            
+            JOptionPane.showMessageDialog(panel, details.toString(), "Booking Details", JOptionPane.INFORMATION_MESSAGE);
+        });
         
-        JLabel titleLabel = new JLabel("  Check-in / Check-out Management");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        // Implement Check In functionality
+        checkInButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a booking to check in!");
+                return;
+            }
+            
+            Booking selectedBooking = Main.bookings.get(selectedRow);
+            
+            if (!selectedBooking.getStatus().equals("Confirmed")) {
+                JOptionPane.showMessageDialog(panel, "This booking cannot be checked in. It must be in 'Confirmed' status.");
+                return;
+            }
+            
+            // Update booking status
+            selectedBooking.setStatus("In Progress");
+            
+            // Update room status
+            for (Room room : Main.rooms) {
+                if (room.getRoomNumber().equals(selectedBooking.getRoomNumber())) {
+                    room.setStatus("Occupied");
+                    break;
+                }
+            }
+            
+            JOptionPane.showMessageDialog(panel, "Guest has been checked in successfully!");
+            
+            // Refresh the panel
+            contentPanel.remove(panel);
+            contentPanel.add(createBookingsPanel(), "Bookings");
+            switchPanel("Bookings");
+        });
+        
+        // Implement Check Out functionality
+        checkOutButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a booking to check out!");
+                return;
+            }
+            
+            Booking selectedBooking = Main.bookings.get(selectedRow);
+            
+            if (!selectedBooking.getStatus().equals("In Progress")) {
+                JOptionPane.showMessageDialog(panel, "This booking cannot be checked out. It must be in 'In Progress' status.");
+                return;
+            }
+            
+            // Update booking status
+            selectedBooking.setStatus("Completed");
+            
+            // Update room status
+            for (Room room : Main.rooms) {
+                if (room.getRoomNumber().equals(selectedBooking.getRoomNumber())) {
+                    room.setStatus("Available");
+                    break;
+                }
+            }
+            
+            JOptionPane.showMessageDialog(panel, "Guest has been checked out successfully!");
+            
+            // Refresh the panel
+            contentPanel.remove(panel);
+            contentPanel.add(createBookingsPanel(), "Bookings");
+            switchPanel("Bookings");
+        });
+        
+        // Implement Cancel Booking functionality
+        cancelButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a booking to cancel!");
+                return;
+            }
+            
+            Booking selectedBooking = Main.bookings.get(selectedRow);
+            
+            if (selectedBooking.getStatus().equals("Completed")) {
+                JOptionPane.showMessageDialog(panel, "Cannot cancel a completed booking!");
+                return;
+            }
+            
+            int confirm = JOptionPane.showConfirmDialog(panel, 
+                    "Are you sure you want to cancel this booking?", 
+                    "Confirm Cancellation", JOptionPane.YES_NO_OPTION);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Update booking status
+                selectedBooking.setStatus("Cancelled");
+                
+                // Update room status if it was occupied by this booking
+                for (Room room : Main.rooms) {
+                    if (room.getRoomNumber().equals(selectedBooking.getRoomNumber()) && 
+                            room.getStatus().equals("Occupied")) {
+                        room.setStatus("Available");
+                        break;
+                    }
+                }
+                
+                JOptionPane.showMessageDialog(panel, "Booking has been cancelled successfully!");
+                
+                // Refresh the panel
+                contentPanel.remove(panel);
+                contentPanel.add(createBookingsPanel(), "Bookings");
+                switchPanel("Bookings");
+            }
+        });
+        
+        buttonPanel.add(viewButton);
+        buttonPanel.add(checkInButton);
+        buttonPanel.add(checkOutButton);
+        buttonPanel.add(cancelButton);
+        
         panel.add(titleLabel, BorderLayout.NORTH);
-        
-        // Create tabs for check-in and check-out
-        JTabbedPane tabbedPane = new JTabbedPane();
-        
-        // Check-in panel
-        JPanel checkInPanel = new JPanel(new BorderLayout());
-        String[] checkInColumns = {"Booking ID", "Customer", "Room", "Check-in Date", "Status", "Actions"};
-        Object[][] checkInData = {
-            {"B001", "John Doe", "101", "2023-06-10", "Confirmed", "Check-in"},
-            {"B003", "Mike Johnson", "301", "2023-06-15", "Pending", "Check-in"}
-        };
-        JTable checkInTable = new JTable(checkInData, checkInColumns);
-        checkInPanel.add(new JScrollPane(checkInTable));
-        
-        // Check-out panel
-        JPanel checkOutPanel = new JPanel(new BorderLayout());
-        String[] checkOutColumns = {"Booking ID", "Customer", "Room", "Check-out Date", "Status", "Actions"};
-        Object[][] checkOutData = {
-            {"B002", "Jane Smith", "202", "2023-06-14", "Checked-in", "Check-out"}
-        };
-        JTable checkOutTable = new JTable(checkOutData, checkOutColumns);
-        checkOutPanel.add(new JScrollPane(checkOutTable));
-        
-        tabbedPane.addTab("Check-in", checkInPanel);
-        tabbedPane.addTab("Check-out", checkOutPanel);
-        
-        panel.add(tabbedPane, BorderLayout.CENTER);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
     }
     
     private JPanel createCustomersPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
         
-        JLabel titleLabel = new JLabel("  Customer Management");
+        JLabel titleLabel = new JLabel("Customers");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(titleLabel, BorderLayout.NORTH);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create table for customers
-        String[] columnNames = {"ID", "Name", "Email", "Phone", "Address", "Actions"};
-        Object[][] data = {
-            {"C001", "John Doe", "john@example.com", "555-1234", "123 Main St", "View/Edit"},
-            {"C002", "Jane Smith", "jane@example.com", "555-5678", "456 Oak Ave", "View/Edit"},
-            {"C003", "Mike Johnson", "mike@example.com", "555-9012", "789 Pine Rd", "View/Edit"}
-        };
+        // Create table model from customers list
+        String[] columnNames = {"Customer ID", "Name", "Email", "Phone", "Bookings"};
+        Object[][] data = new Object[Main.customers.size()][5];
+        
+        for (int i = 0; i < Main.customers.size(); i++) {
+            Customer customer = Main.customers.get(i);
+            data[i][0] = customer.getCustomerId();
+            data[i][1] = customer.getName();
+            data[i][2] = customer.getEmail();
+            data[i][3] = customer.getPhone();
+            
+            // Count bookings for this customer
+            int bookingCount = 0;
+            for (Booking booking : Main.bookings) {
+                if (booking.getCustomerId().equals(customer.getCustomerId())) {
+                    bookingCount++;
+                }
+            }
+            
+            data[i][4] = bookingCount;
+        }
         
         JTable table = new JTable(data, columnNames);
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
-        // Create button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addButton = new JButton("Add New Customer");
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        
+        JButton addButton = new JButton("Add Customer");
+        JButton editButton = new JButton("Edit Customer");
+        JButton viewButton = new JButton("View Bookings");
+        
+        // Implement Add Customer functionality
+        addButton.addActionListener(e -> {
+            JTextField customerIdField = new JTextField();
+            JTextField nameField = new JTextField();
+            JTextField emailField = new JTextField();
+            JTextField phoneField = new JTextField();
+            JTextField addressField = new JTextField();
+            
+            JPanel inputPanel = new JPanel(new GridLayout(5, 2, 5, 5));
+            inputPanel.add(new JLabel("Customer ID:"));
+            inputPanel.add(customerIdField);
+            inputPanel.add(new JLabel("Name:"));
+            inputPanel.add(nameField);
+            inputPanel.add(new JLabel("Email:"));
+            inputPanel.add(emailField);
+            inputPanel.add(new JLabel("Phone:"));
+            inputPanel.add(phoneField);
+            inputPanel.add(new JLabel("Address:"));
+            inputPanel.add(addressField);
+            
+            int result = JOptionPane.showConfirmDialog(panel, inputPanel, "Add New Customer", 
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                String customerId = customerIdField.getText();
+                String name = nameField.getText();
+                String email = emailField.getText();
+                String phone = phoneField.getText();
+                String address = addressField.getText();
+                
+                // Validate fields
+                if (customerId.isEmpty() || name.isEmpty() || email.isEmpty() || phone.isEmpty()) {
+                    JOptionPane.showMessageDialog(panel, "All fields except address are required!");
+                    return;
+                }
+                
+                // Check if customer ID already exists
+                boolean customerExists = false;
+                for (Customer c : Main.customers) {
+                    if (c.getCustomerId().equals(customerId)) {
+                        customerExists = true;
+                        break;
+                    }
+                }
+                
+                if (customerExists) {
+                    JOptionPane.showMessageDialog(panel, "Customer ID already exists!");
+                } else {
+                    Main.customers.add(new Customer(customerId, name, email, phone, address));
+                    JOptionPane.showMessageDialog(panel, "Customer added successfully!");
+                    
+                    // Refresh the panel
+                    contentPanel.remove(panel);
+                    contentPanel.add(createCustomersPanel(), "Customers");
+                    switchPanel("Customers");
+                }
+            }
+        });
+        
+        // Implement Edit Customer functionality
+        editButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a customer to edit!");
+                return;
+            }
+            
+            Customer selectedCustomer = Main.customers.get(selectedRow);
+            
+            JTextField customerIdField = new JTextField(selectedCustomer.getCustomerId());
+            customerIdField.setEditable(false); // Customer ID can't be changed
+            
+            JTextField nameField = new JTextField(selectedCustomer.getName());
+            JTextField emailField = new JTextField(selectedCustomer.getEmail());
+            JTextField phoneField = new JTextField(selectedCustomer.getPhone());
+            JTextField addressField = new JTextField(selectedCustomer.getAddress());
+            
+            JPanel inputPanel = new JPanel(new GridLayout(5, 2, 5, 5));
+            inputPanel.add(new JLabel("Customer ID:"));
+            inputPanel.add(customerIdField);
+            inputPanel.add(new JLabel("Name:"));
+            inputPanel.add(nameField);
+            inputPanel.add(new JLabel("Email:"));
+            inputPanel.add(emailField);
+            inputPanel.add(new JLabel("Phone:"));
+            inputPanel.add(phoneField);
+            inputPanel.add(new JLabel("Address:"));
+            inputPanel.add(addressField);
+            
+            int result = JOptionPane.showConfirmDialog(panel, inputPanel, "Edit Customer", 
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                String name = nameField.getText();
+                String email = emailField.getText();
+                String phone = phoneField.getText();
+                String address = addressField.getText();
+                
+                // Validate fields
+                if (name.isEmpty() || email.isEmpty() || phone.isEmpty()) {
+                    JOptionPane.showMessageDialog(panel, "All fields except address are required!");
+                    return;
+                }
+                
+                selectedCustomer.setName(name);
+                selectedCustomer.setEmail(email);
+                selectedCustomer.setPhone(phone);
+                selectedCustomer.setAddress(address);
+                
+                JOptionPane.showMessageDialog(panel, "Customer updated successfully!");
+                
+                // Refresh the panel
+                contentPanel.remove(panel);
+                contentPanel.add(createCustomersPanel(), "Customers");
+                switchPanel("Customers");
+            }
+        });
+        
+        // Implement View Bookings functionality
+        viewButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(panel, "Please select a customer to view bookings!");
+                return;
+            }
+            
+            Customer selectedCustomer = Main.customers.get(selectedRow);
+            
+            // Find all bookings for this customer
+            List<Booking> customerBookings = new ArrayList<>();
+            for (Booking booking : Main.bookings) {
+                if (booking.getCustomerId().equals(selectedCustomer.getCustomerId())) {
+                    customerBookings.add(booking);
+                }
+            }
+            
+            if (customerBookings.isEmpty()) {
+                JOptionPane.showMessageDialog(panel, "This customer has no bookings!");
+                return;
+            }
+            
+            // Create a dialog with a table of bookings
+            JDialog bookingsDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(panel), 
+                    "Bookings for " + selectedCustomer.getName(), true);
+            bookingsDialog.setSize(600, 400);
+            bookingsDialog.setLocationRelativeTo(panel);
+            
+            JPanel dialogPanel = new JPanel(new BorderLayout());
+            
+            String[] bookingColumns = {"Booking ID", "Room", "Check-in", "Check-out", "Status"};
+            Object[][] bookingData = new Object[customerBookings.size()][5];
+            
+            for (int i = 0; i < customerBookings.size(); i++) {
+                Booking booking = customerBookings.get(i);
+                bookingData[i][0] = booking.getBookingId();
+                bookingData[i][1] = booking.getRoomNumber();
+                bookingData[i][2] = booking.getCheckInDate();
+                bookingData[i][3] = booking.getCheckOutDate();
+                bookingData[i][4] = booking.getStatus();
+            }
+            
+            JTable bookingsTable = new JTable(bookingData, bookingColumns);
+            JScrollPane bookingsScrollPane = new JScrollPane(bookingsTable);
+            bookingsScrollPane.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            
+            dialogPanel.add(bookingsScrollPane, BorderLayout.CENTER);
+            
+            JButton closeButton = new JButton("Close");
+            closeButton.addActionListener(evt -> bookingsDialog.dispose());
+            
+            JPanel dialogButtonPanel = new JPanel();
+            dialogButtonPanel.add(closeButton);
+            dialogButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+            
+            dialogPanel.add(dialogButtonPanel, BorderLayout.SOUTH);
+            
+            bookingsDialog.add(dialogPanel);
+            bookingsDialog.setVisible(true);
+        });
+        
         buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(viewButton);
         
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
-    }
-    
-    private JPanel createBillingPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        
-        JLabel titleLabel = new JLabel("  Billing and Invoices");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         panel.add(titleLabel, BorderLayout.NORTH);
-        
-        // Create table for invoices
-        String[] columnNames = {"Invoice ID", "Customer", "Room", "Amount", "Status", "Date", "Actions"};
-        Object[][] data = {
-            {"INV001", "John Doe", "101", "$500", "Paid", "2023-06-15", "View/Print"},
-            {"INV002", "Jane Smith", "202", "$300", "Pending", "2023-06-14", "View/Print"},
-            {"INV003", "Mike Johnson", "301", "$1250", "Paid", "2023-06-20", "View/Print"}
-        };
-        
-        JTable table = new JTable(data, columnNames);
-        JScrollPane scrollPane = new JScrollPane(table);
-        
-        // Create button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addButton = new JButton("Create New Invoice");
-        buttonPanel.add(addButton);
-        
-        panel.add(buttonPanel, BorderLayout.SOUTH);
         panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
     }
     
     private JPanel createReportsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
         
-        JLabel titleLabel = new JLabel("  Reports");
+        JLabel titleLabel = new JLabel("Reports");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(titleLabel, BorderLayout.NORTH);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create reports options
-        JPanel reportsPanel = new JPanel(new GridLayout(3, 2, 20, 20));
+        JPanel reportsPanel = new JPanel(new GridLayout(2, 2, 15, 15));
         reportsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        reportsPanel.setBackground(Color.WHITE);
         
-        String[] reportTypes = {
-            "Occupancy Report", "Revenue Report", "Booking Statistics", 
-            "Customer Statistics", "Inventory Report", "Staff Performance"
-        };
+        String[] reportTypes = {"Occupancy Report", "Revenue Report", "Booking Statistics", "Customer Statistics"};
         
-        for (String reportType : reportTypes) {
+        for (String report : reportTypes) {
             JPanel reportCard = new JPanel(new BorderLayout());
             reportCard.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
             reportCard.setBackground(Color.WHITE);
             
-            JLabel reportLabel = new JLabel(reportType, JLabel.CENTER);
+            JLabel reportLabel = new JLabel(report, JLabel.CENTER);
             reportLabel.setFont(new Font("Arial", Font.BOLD, 14));
             
             JButton generateButton = new JButton("Generate");
+            generateButton.addActionListener(e -> {
+                // Create a report dialog
+                JDialog reportDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(panel), 
+                        report, true);
+                reportDialog.setSize(600, 400);
+                reportDialog.setLocationRelativeTo(panel);
+                
+                JPanel dialogPanel = new JPanel(new BorderLayout());
+                dialogPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+                
+                JLabel reportTitleLabel = new JLabel(report, JLabel.CENTER);
+                reportTitleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+                
+                JPanel reportContentPanel = new JPanel();
+                
+                // Generate report based on type
+                switch (report) {
+                    case "Occupancy Report":
+                        reportContentPanel = generateOccupancyReport();
+                        break;
+                    case "Revenue Report":
+                        reportContentPanel = generateRevenueReport();
+                        break;
+                    case "Booking Statistics":
+                        reportContentPanel = generateBookingStatistics();
+                        break;
+                    case "Customer Statistics":
+                        reportContentPanel = generateCustomerStatistics();
+                        break;
+                }
+                
+                JButton closeButton = new JButton("Close");
+                closeButton.addActionListener(evt -> reportDialog.dispose());
+                
+                JPanel buttonPanel = new JPanel();
+                buttonPanel.add(closeButton);
+                
+                dialogPanel.add(reportTitleLabel, BorderLayout.NORTH);
+                dialogPanel.add(reportContentPanel, BorderLayout.CENTER);
+                dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+                
+                reportDialog.add(dialogPanel);
+                reportDialog.setVisible(true);
+            });
+            
             JPanel buttonPanel = new JPanel();
             buttonPanel.add(generateButton);
             buttonPanel.setBackground(Color.WHITE);
             
             reportCard.add(reportLabel, BorderLayout.CENTER);
             reportCard.add(buttonPanel, BorderLayout.SOUTH);
-            
             reportsPanel.add(reportCard);
         }
         
+        panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(reportsPanel, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    // Methods for generating different reports
+    private JPanel generateOccupancyReport() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Count rooms by status
+        int available = 0;
+        int occupied = 0;
+        int maintenance = 0;
+        
+        for (Room room : Main.rooms) {
+            switch (room.getStatus()) {
+                case "Available":
+                    available++;
+                    break;
+                case "Occupied":
+                    occupied++;
+                    break;
+                case "Maintenance":
+                    maintenance++;
+                    break;
+            }
+        }
+        
+        // Create a table with occupancy data
+        String[] columnNames = {"Status", "Count", "Percentage"};
+        Object[][] data = {
+            {"Available", available, String.format("%.1f%%", (double) available / Main.rooms.size() * 100)},
+            {"Occupied", occupied, String.format("%.1f%%", (double) occupied / Main.rooms.size() * 100)},
+            {"Maintenance", maintenance, String.format("%.1f%%", (double) maintenance / Main.rooms.size() * 100)},
+            {"Total", Main.rooms.size(), "100.0%"}
+        };
+        
+        JTable table = new JTable(data, columnNames);
+        JScrollPane scrollPane = new JScrollPane(table);
+        
+        // Add a summary
+        JLabel summaryLabel = new JLabel(String.format(
+                "<html>Current Occupancy Rate: <b>%.1f%%</b><br>" +
+                "Available Rooms: <b>%d</b><br>" +
+                "Occupied Rooms: <b>%d</b><br>" +
+                "Rooms in Maintenance: <b>%d</b></html>",
+                (double) occupied / Main.rooms.size() * 100,
+                available, occupied, maintenance));
+        summaryLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        
+        panel.add(summaryLabel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    private JPanel generateRevenueReport() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Calculate revenue by room type
+        double standardRevenue = 0;
+        double deluxeRevenue = 0;
+        double suiteRevenue = 0;
+        
+        // For simplicity, just calculate based on room prices and status
+        for (Room room : Main.rooms) {
+            if (room.getStatus().equals("Occupied")) {
+                switch (room.getType()) {
+                    case "Standard":
+                        standardRevenue += room.getPrice();
+                        break;
+                    case "Deluxe":
+                        deluxeRevenue += room.getPrice();
+                        break;
+                    case "Suite":
+                        suiteRevenue += room.getPrice();
+                        break;
+                }
+            }
+        }
+        
+        double totalRevenue = standardRevenue + deluxeRevenue + suiteRevenue;
+        
+        // Create a table with revenue data
+        String[] columnNames = {"Room Type", "Daily Revenue", "Percentage"};
+        Object[][] data = {
+            {"Standard", "$" + standardRevenue, totalRevenue > 0 ? String.format("%.1f%%", standardRevenue / totalRevenue * 100) : "0.0%"},
+            {"Deluxe", "$" + deluxeRevenue, totalRevenue > 0 ? String.format("%.1f%%", deluxeRevenue / totalRevenue * 100) : "0.0%"},
+            {"Suite", "$" + suiteRevenue, totalRevenue > 0 ? String.format("%.1f%%", suiteRevenue / totalRevenue * 100) : "0.0%"},
+            {"Total", "$" + totalRevenue, "100.0%"}
+        };
+        
+        JTable table = new JTable(data, columnNames);
+        JScrollPane scrollPane = new JScrollPane(table);
+        
+        // Add a summary
+        JLabel summaryLabel = new JLabel(String.format(
+                "<html>Daily Revenue: <b>$%.2f</b><br>" +
+                "Projected Monthly Revenue: <b>$%.2f</b><br>" +
+                "Projected Annual Revenue: <b>$%.2f</b></html>",
+                totalRevenue, totalRevenue * 30, totalRevenue * 365));
+        summaryLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        
+        panel.add(summaryLabel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    private JPanel generateBookingStatistics() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Count bookings by status
+        int confirmed = 0;
+        int inProgress = 0;
+        int completed = 0;
+        int cancelled = 0;
+        
+        for (Booking booking : Main.bookings) {
+            switch (booking.getStatus()) {
+                case "Confirmed":
+                    confirmed++;
+                    break;
+                case "In Progress":
+                    inProgress++;
+                    break;
+                case "Completed":
+                    completed++;
+                    break;
+                case "Cancelled":
+                    cancelled++;
+                    break;
+            }
+        }
+        
+        int totalBookings = Main.bookings.size();
+        
+        // Create a table with booking data
+        String[] columnNames = {"Status", "Count", "Percentage"};
+        Object[][] data = {
+            {"Confirmed", confirmed, totalBookings > 0 ? String.format("%.1f%%", (double) confirmed / totalBookings * 100) : "0.0%"},
+            {"In Progress", inProgress, totalBookings > 0 ? String.format("%.1f%%", (double) inProgress / totalBookings * 100) : "0.0%"},
+            {"Completed", completed, totalBookings > 0 ? String.format("%.1f%%", (double) completed / totalBookings * 100) : "0.0%"},
+            {"Cancelled", cancelled, totalBookings > 0 ? String.format("%.1f%%", (double) cancelled / totalBookings * 100) : "0.0%"},
+            {"Total", totalBookings, "100.0%"}
+        };
+        
+        JTable table = new JTable(data, columnNames);
+        JScrollPane scrollPane = new JScrollPane(table);
+        
+        // Add a summary
+        JLabel summaryLabel = new JLabel(String.format(
+                "<html>Total Bookings: <b>%d</b><br>" +
+                "Active Bookings: <b>%d</b><br>" +
+                "Completion Rate: <b>%.1f%%</b><br>" +
+                "Cancellation Rate: <b>%.1f%%</b></html>",
+                totalBookings, confirmed + inProgress,
+                totalBookings > 0 ? (double) completed / totalBookings * 100 : 0.0,
+                totalBookings > 0 ? (double) cancelled / totalBookings * 100 : 0.0));
+        summaryLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        
+        panel.add(summaryLabel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    private JPanel generateCustomerStatistics() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Calculate customer statistics
+        Map<String, Integer> bookingsPerCustomer = new HashMap<>();
+        
+        for (Booking booking : Main.bookings) {
+            String customerId = booking.getCustomerId();
+            bookingsPerCustomer.put(customerId, bookingsPerCustomer.getOrDefault(customerId, 0) + 1);
+        }
+        
+        // Find top customers by number of bookings
+        List<Map.Entry<String, Integer>> sortedCustomers = new ArrayList<>(bookingsPerCustomer.entrySet());
+        sortedCustomers.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+        
+        // Create a table with customer data
+        String[] columnNames = {"Customer ID", "Name", "Bookings"};
+        Object[][] data = new Object[Math.min(sortedCustomers.size(), 5)][3];
+        
+        for (int i = 0; i < data.length; i++) {
+            Map.Entry<String, Integer> entry = sortedCustomers.get(i);
+            String customerId = entry.getKey();
+            int bookingCount = entry.getValue();
+            
+            // Find customer name
+            String customerName = "Unknown";
+            for (Customer customer : Main.customers) {
+                if (customer.getCustomerId().equals(customerId)) {
+                    customerName = customer.getName();
+                    break;
+                }
+            }
+            
+            data[i][0] = customerId;
+            data[i][1] = customerName;
+            data[i][2] = bookingCount;
+        }
+        
+        JTable table = new JTable(data, columnNames);
+        JScrollPane scrollPane = new JScrollPane(table);
+        
+        // Add a summary
+        double avgBookingsPerCustomer = (double) Main.bookings.size() / Main.customers.size();
+        
+        JLabel summaryLabel = new JLabel(String.format(
+                "<html>Total Customers: <b>%d</b><br>" +
+                "Total Bookings: <b>%d</b><br>" +
+                "Average Bookings per Customer: <b>%.2f</b><br>" +
+                "Top Customers:</html>",
+                Main.customers.size(), Main.bookings.size(), avgBookingsPerCustomer));
+        summaryLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        
+        panel.add(summaryLabel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
         
         return panel;
     }
 }
 
 class CustomerDashboard extends JFrame {
-    private JPanel mainPanel;
-    private CardLayout cardLayout;
-    private JPanel cardsPanel;
+    private JPanel contentPanel;
+    private String customerId;
+    private Customer customer;
     
-    public CustomerDashboard() {
+    public CustomerDashboard(String customerId) {
+        this.customerId = customerId;
+        
+        // Find the customer object
+        for (Customer c : Main.customers) {
+            if (c.getCustomerId().equals(customerId)) {
+                this.customer = c;
+                break;
+            }
+        }
+        
         setTitle("Hotel Management System - Customer Dashboard");
-        setSize(900, 650);
+        setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(UIUtils.BACKGROUND_COLOR);
+        JPanel mainPanel = new JPanel(new BorderLayout());
         
-        // Create header panel with gradient
-        JPanel headerPanel = UIUtils.createGradientPanel(UIUtils.ACCENT_COLOR, UIUtils.SECONDARY_COLOR);
-        headerPanel.setLayout(new BorderLayout());
-        headerPanel.setPreferredSize(new Dimension(900, 70));
+        // Create header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(26, 188, 156));
+        headerPanel.setPreferredSize(new Dimension(800, 50));
         
-        JLabel titleLabel = new JLabel("  Customer Dashboard");
-        titleLabel.setFont(UIUtils.TITLE_FONT);
+        JLabel titleLabel = new JLabel("Customer Dashboard");
         titleLabel.setForeground(Color.WHITE);
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
         
         JButton logoutButton = new JButton("Logout");
-        UIUtils.styleSecondaryButton(logoutButton);
         logoutButton.addActionListener(e -> logout());
-        JPanel logoutPanel = new JPanel();
-        logoutPanel.setOpaque(false);
-        logoutPanel.add(logoutButton);
-        headerPanel.add(logoutPanel, BorderLayout.EAST);
         
-        // Create sidebar panel
-        JPanel sidebarPanel = UIUtils.createSidebarPanel();
-        sidebarPanel.setPreferredSize(new Dimension(220, 650));
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(logoutButton, BorderLayout.EAST);
         
-        // Add logo or icon at the top of sidebar
-        JPanel logoPanel = new JPanel();
-        logoPanel.setBackground(UIUtils.DARK_BACKGROUND);
-        logoPanel.setMaximumSize(new Dimension(220, 80));
-        logoPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        JLabel logoLabel = new JLabel("HMS");
-        logoLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        logoLabel.setForeground(Color.WHITE);
-        logoPanel.add(logoLabel);
-        sidebarPanel.add(logoPanel);
-        sidebarPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        // Create sidebar
+        JPanel sidebarPanel = new JPanel();
+        sidebarPanel.setLayout(new BoxLayout(sidebarPanel, BoxLayout.Y_AXIS));
+        sidebarPanel.setBackground(new Color(52, 73, 94));
+        sidebarPanel.setPreferredSize(new Dimension(180, 600));
         
         // Add menu buttons
-        String[] menuItems = {"Dashboard", "Browse Rooms", "My Bookings", "My Profile", "Feedback"};
-        for (String menuItem : menuItems) {
-            JButton menuButton = UIUtils.createSidebarButton("  " + menuItem);
-            menuButton.setMaximumSize(new Dimension(220, 45));
+        String[] menuItems = {"Dashboard", "Browse Rooms", "My Bookings", "My Profile"};
+        for (String item : menuItems) {
+            JButton menuButton = new JButton(item);
+            menuButton.setMaximumSize(new Dimension(180, 40));
             menuButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-            
-            menuButton.addActionListener(e -> switchPanel(menuItem));
-            
+            menuButton.addActionListener(e -> switchPanel(item));
             sidebarPanel.add(menuButton);
             sidebarPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
         
-        // Create cards panel for different sections
-        cardLayout = new CardLayout();
-        cardsPanel = new JPanel(cardLayout);
-        
-        // Add different panels for each section
-        cardsPanel.add(createCustomerDashboardPanel(), "Dashboard");
-        cardsPanel.add(createBrowseRoomsPanel(), "Browse Rooms");
-        cardsPanel.add(createMyBookingsPanel(), "My Bookings");
-        cardsPanel.add(createMyProfilePanel(), "My Profile");
-        cardsPanel.add(createFeedbackPanel(), "Feedback");
+        // Create content panel
+        contentPanel = new JPanel(new CardLayout());
+        contentPanel.add(createDashboardPanel(), "Dashboard");
+        contentPanel.add(createBrowseRoomsPanel(), "Browse Rooms");
+        contentPanel.add(createMyBookingsPanel(), "My Bookings");
+        contentPanel.add(createMyProfilePanel(), "My Profile");
         
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(sidebarPanel, BorderLayout.WEST);
-        mainPanel.add(cardsPanel, BorderLayout.CENTER);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
         
         add(mainPanel);
         setVisible(true);
     }
     
     private void switchPanel(String panelName) {
-        cardLayout.show(cardsPanel, panelName);
+        CardLayout cl = (CardLayout) contentPanel.getLayout();
+        cl.show(contentPanel, panelName);
     }
     
     private void logout() {
@@ -828,45 +1420,53 @@ class CustomerDashboard extends JFrame {
         new LoginScreen();
     }
     
-    private JPanel createCustomerDashboardPanel() {
+    private JPanel createDashboardPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
         
-        JLabel welcomeLabel = new JLabel("  Welcome, User!");
+        String greeting = "Welcome, " + (customer != null ? customer.getName() : "Guest") + "!";
+        JLabel welcomeLabel = new JLabel(greeting);
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        welcomeLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JPanel cardsPanel = new JPanel(new GridLayout(2, 2, 15, 15));
+        cardsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        cardsPanel.add(createActionCard("Book a Room", "Find and book your perfect room"));
+        cardsPanel.add(createActionCard("My Bookings", "View and manage your bookings"));
+        cardsPanel.add(createActionCard("Special Offers", "Check out our latest deals"));
+        cardsPanel.add(createActionCard("Contact Us", "Need help? Reach out to us"));
+        
         panel.add(welcomeLabel, BorderLayout.NORTH);
-        
-        // Create dashboard content
-        JPanel contentPanel = new JPanel(new GridLayout(2, 2, 20, 20));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        contentPanel.setBackground(Color.WHITE);
-        
-        // Add quick action cards
-        contentPanel.add(createActionCard("Book a Room", "Find and book your perfect room", new Color(46, 204, 113)));
-        contentPanel.add(createActionCard("Upcoming Stay", "Check-in: June 15, 2023\nRoom: 301 (Suite)", new Color(52, 152, 219)));
-        contentPanel.add(createActionCard("Special Offers", "Summer discount: 15% off on all bookings", new Color(155, 89, 182)));
-        contentPanel.add(createActionCard("Hotel Services", "Explore our premium services", new Color(230, 126, 34)));
-        
-        panel.add(contentPanel, BorderLayout.CENTER);
+        panel.add(cardsPanel, BorderLayout.CENTER);
         
         return panel;
     }
     
-    private JPanel createActionCard(String title, String description, Color color) {
+    private JPanel createActionCard(String title, String description) {
         JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(color);
-        card.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        card.setBackground(Color.WHITE);
         
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
         
-        JLabel descLabel = new JLabel("<html>" + description.replace("\n", "<br>") + "</html>");
-        descLabel.setForeground(Color.WHITE);
+        JLabel descLabel = new JLabel("<html>" + description + "</html>");
+        descLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
         
         JButton actionButton = new JButton("View");
+        actionButton.addActionListener(e -> {
+            if (title.equals("Book a Room")) {
+                switchPanel("Browse Rooms");
+            } else if (title.equals("My Bookings")) {
+                switchPanel("My Bookings");
+            } else {
+                JOptionPane.showMessageDialog(card, "This feature will be available soon!");
+            }
+        });
+        
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(color);
+        buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(actionButton);
         
         card.add(titleLabel, BorderLayout.NORTH);
@@ -878,83 +1478,79 @@ class CustomerDashboard extends JFrame {
     
     private JPanel createBrowseRoomsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(UIUtils.BACKGROUND_COLOR);
         
-        // Create header panel with gradient
-        JPanel headerPanel = UIUtils.createHeaderPanel("Browse Available Rooms");
-        headerPanel.setPreferredSize(new Dimension(900, 60));
+        JLabel titleLabel = new JLabel("Browse Rooms");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create search panel
-        JPanel searchPanel = UIUtils.createRoundedPanel(Color.WHITE);
-        searchPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        searchPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
-        JLabel checkInLabel = new JLabel("Check-in:");
-        checkInLabel.setFont(UIUtils.REGULAR_FONT);
-        JTextField checkInField = new JTextField(10);
-        UIUtils.styleTextField(checkInField);
+        JTextField checkInField = new JTextField(java.time.LocalDate.now().toString(), 10);
+        JTextField checkOutField = new JTextField(java.time.LocalDate.now().plusDays(1).toString(), 10);
+        JComboBox<String> roomTypeCombo = new JComboBox<>(new String[] {"Any", "Standard", "Deluxe", "Suite"});
         
-        JLabel checkOutLabel = new JLabel("Check-out:");
-        checkOutLabel.setFont(UIUtils.REGULAR_FONT);
-        JTextField checkOutField = new JTextField(10);
-        UIUtils.styleTextField(checkOutField);
-        
-        JLabel roomTypeLabel = new JLabel("Room Type:");
-        roomTypeLabel.setFont(UIUtils.REGULAR_FONT);
-        String[] roomTypes = {"Any", "Standard", "Deluxe", "Suite"};
-        JComboBox<String> roomTypeCombo = new JComboBox<>(roomTypes);
-        UIUtils.styleComboBox(roomTypeCombo);
+        searchPanel.add(new JLabel("Check-in:"));
+        searchPanel.add(checkInField);
+        searchPanel.add(new JLabel("Check-out:"));
+        searchPanel.add(checkOutField);
+        searchPanel.add(new JLabel("Room Type:"));
+        searchPanel.add(roomTypeCombo);
         
         JButton searchButton = new JButton("Search");
-        UIUtils.stylePrimaryButton(searchButton);
-        
-        searchPanel.add(checkInLabel);
-        searchPanel.add(checkInField);
-        searchPanel.add(checkOutLabel);
-        searchPanel.add(checkOutField);
-        searchPanel.add(roomTypeLabel);
-        searchPanel.add(roomTypeCombo);
+        searchButton.addActionListener(e -> {
+            // In real app, this would filter the rooms based on search criteria
+            JOptionPane.showMessageDialog(panel, "Search results updated");
+        });
         searchPanel.add(searchButton);
         
-        // Create rooms display panel
-        JPanel roomsPanel = new JPanel(new GridLayout(0, 3, 20, 20));
-        roomsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        roomsPanel.setBackground(UIUtils.BACKGROUND_COLOR);
+        JPanel roomsPanel = new JPanel(new GridLayout(0, 2, 15, 15));
+        roomsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
-        // Add room cards with different accent colors
-        roomsPanel.add(UIUtils.createModernRoomCard("101", "Standard Room", "$100/night", "Single bed, TV, AC, Free WiFi", UIUtils.PRIMARY_COLOR));
-        roomsPanel.add(UIUtils.createModernRoomCard("201", "Deluxe Room", "$150/night", "Queen bed, TV, AC, Mini bar, Free WiFi", UIUtils.SECONDARY_COLOR));
-        roomsPanel.add(UIUtils.createModernRoomCard("301", "Suite", "$250/night", "King bed, Separate living area, Jacuzzi, Mini bar, Free WiFi", UIUtils.ACCENT_COLOR));
-        roomsPanel.add(UIUtils.createModernRoomCard("102", "Standard Room", "$100/night", "Single bed, TV, AC, Free WiFi", UIUtils.PRIMARY_COLOR));
-        roomsPanel.add(UIUtils.createModernRoomCard("202", "Deluxe Room", "$150/night", "Queen bed, TV, AC, Mini bar, Free WiFi", UIUtils.SECONDARY_COLOR));
+        // Add room cards for available rooms
+        for (Room room : Main.rooms) {
+            if (room.getStatus().equals("Available")) {
+                roomsPanel.add(createRoomCard(room));
+            }
+        }
         
         JScrollPane scrollPane = new JScrollPane(roomsPanel);
-        UIUtils.styleScrollPane(scrollPane);
         
         JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(UIUtils.BACKGROUND_COLOR);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         contentPanel.add(searchPanel, BorderLayout.NORTH);
         contentPanel.add(scrollPane, BorderLayout.CENTER);
         
-        panel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(contentPanel, BorderLayout.CENTER);
         
         return panel;
     }
     
-    // This method is replaced by UIUtils.createModernRoomCard
-    private JPanel createRoomCard(String roomNumber, String roomType, String price, String description) {
-        // Using the new UIUtils method instead
-        return UIUtils.createModernRoomCard(roomNumber, roomType, price, description, UIUtils.PRIMARY_COLOR);
+    private JPanel createRoomCard(Room room) {
+        JPanel card = new JPanel(new BorderLayout());
         card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         card.setBackground(Color.WHITE);
         
-        JLabel roomLabel = new JLabel("Room " + roomNumber + " - " + roomType);
+        String description;
+        switch (room.getType()) {
+            case "Standard":
+                description = "Single bed, TV, AC, WiFi";
+                break;
+            case "Deluxe":
+                description = "Queen bed, TV, AC, Mini bar, WiFi";
+                break;
+            case "Suite":
+                description = "King bed, Living area, Jacuzzi, Mini bar, WiFi";
+                break;
+            default:
+                description = "Comfortable accommodation with basic amenities";
+        }
+        
+        JLabel roomLabel = new JLabel("Room " + room.getRoomNumber() + " - " + room.getType());
         roomLabel.setFont(new Font("Arial", Font.BOLD, 14));
         roomLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
         
-        JLabel priceLabel = new JLabel(price);
+        JLabel priceLabel = new JLabel("$" + room.getPrice() + "/night");
         priceLabel.setFont(new Font("Arial", Font.BOLD, 12));
         priceLabel.setForeground(new Color(46, 134, 193));
         priceLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 10));
@@ -963,8 +1559,70 @@ class CustomerDashboard extends JFrame {
         descLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
         
         JButton bookButton = new JButton("Book Now");
-        bookButton.setBackground(new Color(46, 134, 193));
-        bookButton.setForeground(Color.WHITE);
+        bookButton.addActionListener(e -> {
+            // Create booking dialog
+            JDialog bookingDialog = new JDialog(this, "Book Room " + room.getRoomNumber(), true);
+            bookingDialog.setSize(400, 300);
+            bookingDialog.setLocationRelativeTo(this);
+            
+            JPanel bookingPanel = new JPanel(new GridLayout(4, 2, 10, 10));
+            bookingPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            
+            JTextField checkInField = new JTextField(java.time.LocalDate.now().toString());
+            JTextField checkOutField = new JTextField(java.time.LocalDate.now().plusDays(1).toString());
+            
+            bookingPanel.add(new JLabel("Room:"));
+            bookingPanel.add(new JLabel(room.getRoomNumber() + " - " + room.getType()));
+            
+            bookingPanel.add(new JLabel("Price:"));
+            bookingPanel.add(new JLabel("$" + room.getPrice() + "/night"));
+            
+            bookingPanel.add(new JLabel("Check-in Date:"));
+            bookingPanel.add(checkInField);
+            
+            bookingPanel.add(new JLabel("Check-out Date:"));
+            bookingPanel.add(checkOutField);
+            
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton confirmButton = new JButton("Confirm Booking");
+            JButton cancelButton = new JButton("Cancel");
+            
+            confirmButton.addActionListener(evt -> {
+                String checkIn = checkInField.getText();
+                String checkOut = checkOutField.getText();
+                
+                // Generate a new booking ID
+                String bookingId = "B" + String.format("%03d", Main.bookings.size() + 1);
+                
+                // Create new booking
+                Main.bookings.add(new Booking(bookingId, customerId, room.getRoomNumber(), checkIn, checkOut, "Confirmed"));
+                
+                // Update room status
+                room.setStatus("Occupied");
+                
+                JOptionPane.showMessageDialog(bookingDialog, 
+                        "Booking confirmed!\nBooking ID: " + bookingId);
+                
+                bookingDialog.dispose();
+                
+                // Refresh the rooms panel
+                contentPanel.remove(panel);
+                contentPanel.add(createBrowseRoomsPanel(), "Browse Rooms");
+                switchPanel("Browse Rooms");
+            });
+            
+            cancelButton.addActionListener(evt -> bookingDialog.dispose());
+            
+            buttonPanel.add(confirmButton);
+            buttonPanel.add(cancelButton);
+            
+            JPanel mainPanel = new JPanel(new BorderLayout());
+            mainPanel.add(bookingPanel, BorderLayout.CENTER);
+            mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+            
+            bookingDialog.add(mainPanel);
+            bookingDialog.setVisible(true);
+        });
         
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);
@@ -984,47 +1642,153 @@ class CustomerDashboard extends JFrame {
     
     private JPanel createMyBookingsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
         
-        JLabel titleLabel = new JLabel("  My Bookings");
+        JLabel titleLabel = new JLabel("My Bookings");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(titleLabel, BorderLayout.NORTH);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create table for bookings
-        String[] columnNames = {"Booking ID", "Room", "Check-in", "Check-out", "Status", "Actions"};
-        Object[][] data = {
-            {"B003", "301", "2023-06-15", "2023-06-20", "Confirmed", "View/Cancel"},
-            {"B005", "202", "2023-07-10", "2023-07-15", "Pending", "View/Cancel"}
-        };
+        // Find bookings for this customer
+        List<Booking> myBookings = new ArrayList<>();
+        for (Booking booking : Main.bookings) {
+            if (booking.getCustomerId().equals(customerId)) {
+                myBookings.add(booking);
+            }
+        }
+        
+        String[] columnNames = {"Booking ID", "Room", "Check-in", "Check-out", "Status"};
+        Object[][] data = new Object[myBookings.size()][5];
+        
+        for (int i = 0; i < myBookings.size(); i++) {
+            Booking booking = myBookings.get(i);
+            data[i][0] = booking.getBookingId();
+            data[i][1] = booking.getRoomNumber();
+            data[i][2] = booking.getCheckInDate();
+            data[i][3] = booking.getCheckOutDate();
+            data[i][4] = booking.getStatus();
+        }
         
         JTable table = new JTable(data, columnNames);
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
         
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+        
+        JButton viewButton = new JButton("View Details");
+        JButton cancelButton = new JButton("Cancel Booking");
+        
+        viewButton.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                Booking selectedBooking = myBookings.get(row);
+                
+                // Find room details
+                Room room = null;
+                for (Room r : Main.rooms) {
+                    if (r.getRoomNumber().equals(selectedBooking.getRoomNumber())) {
+                        room = r;
+                        break;
+                    }
+                }
+                
+                StringBuilder details = new StringBuilder();
+                details.append("Booking ID: ").append(selectedBooking.getBookingId()).append("\n");
+                details.append("Status: ").append(selectedBooking.getStatus()).append("\n\n");
+                
+                details.append("Room Information:\n");
+                if (room != null) {
+                    details.append("Room Number: ").append(room.getRoomNumber()).append("\n");
+                    details.append("Type: ").append(room.getType()).append("\n");
+                    details.append("Price: $").append(room.getPrice()).append(" per night\n\n");
+                } else {
+                    details.append("Room information not found.\n\n");
+                }
+                
+                details.append("Dates:\n");
+                details.append("Check-in: ").append(selectedBooking.getCheckInDate()).append("\n");
+                details.append("Check-out: ").append(selectedBooking.getCheckOutDate()).append("\n");
+                
+                JOptionPane.showMessageDialog(panel, details.toString(), "Booking Details", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(panel, "Please select a booking first");
+            }
+        });
+        
+        cancelButton.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row != -1) {
+                Booking selectedBooking = myBookings.get(row);
+                
+                // Check if booking can be cancelled
+                if (selectedBooking.getStatus().equals("Completed")) {
+                    JOptionPane.showMessageDialog(panel, "Cannot cancel a completed booking!");
+                    return;
+                }
+                
+                int option = JOptionPane.showConfirmDialog(panel, 
+                    "Are you sure you want to cancel booking " + selectedBooking.getBookingId() + "?");
+                
+                if (option == JOptionPane.YES_OPTION) {
+                    // Update booking status
+                    selectedBooking.setStatus("Cancelled");
+                    
+                    // Update room status
+                    for (Room room : Main.rooms) {
+                        if (room.getRoomNumber().equals(selectedBooking.getRoomNumber())) {
+                            if (room.getStatus().equals("Occupied")) {
+                                room.setStatus("Available");
+                            }
+                            break;
+                        }
+                    }
+                    
+                    JOptionPane.showMessageDialog(panel, "Booking " + selectedBooking.getBookingId() + " has been cancelled");
+                    
+                    // Refresh panel
+                    contentPanel.remove(panel);
+                    contentPanel.add(createMyBookingsPanel(), "My Bookings");
+                    switchPanel("My Bookings");
+                }
+            } else {
+                JOptionPane.showMessageDialog(panel, "Please select a booking first");
+            }
+        });
+        
+        buttonPanel.add(viewButton);
+        buttonPanel.add(cancelButton);
+        
+        panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
         
         return panel;
     }
     
     private JPanel createMyProfilePanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
         
-        JLabel titleLabel = new JLabel("  My Profile");
+        JLabel titleLabel = new JLabel("My Profile");
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        panel.add(titleLabel, BorderLayout.NORTH);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create profile form
         JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(Color.WHITE);
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
         
-        // Add form fields
-        String[] labels = {"Full Name:", "Email:", "Phone:", "Address:", "Password:"};
-        String[] values = {"John Doe", "john@example.com", "555-1234", "123 Main St", "********"};
+        String[] labels = {"Customer ID:", "Full Name:", "Email:", "Phone:", "Address:", "Password:"};
+        String[] values = {
+            customer != null ? customer.getCustomerId() : "",
+            customer != null ? customer.getName() : "",
+            customer != null ? customer.getEmail() : "",
+            customer != null ? customer.getPhone() : "",
+            customer != null ? customer.getAddress() : "",
+            "********"
+        };
+        
+        JTextField[] fields = new JTextField[values.length];
         
         for (int i = 0; i < labels.length; i++) {
             gbc.gridx = 0;
@@ -1034,62 +1798,43 @@ class CustomerDashboard extends JFrame {
             
             gbc.gridx = 1;
             gbc.gridwidth = 2;
-            JTextField field = new JTextField(values[i]);
-            formPanel.add(field, gbc);
+            fields[i] = new JTextField(values[i]);
+            
+            // Customer ID can't be changed
+            if (i == 0) {
+                fields[i].setEditable(false);
+            }
+            
+            // Password is masked and handled separately
+            if (i == 5) {
+                JPasswordField passwordField = new JPasswordField(values[i]);
+                formPanel.add(passwordField, gbc);
+            } else {
+                formPanel.add(fields[i], gbc);
+            }
         }
         
-        // Add update button
+        JButton updateButton = new JButton("Update Profile");
+        updateButton.addActionListener(e -> {
+            if (customer != null) {
+                customer.setName(fields[1].getText());
+                customer.setEmail(fields[2].getText());
+                customer.setPhone(fields[3].getText());
+                customer.setAddress(fields[4].getText());
+                
+                JOptionPane.showMessageDialog(panel, "Profile updated successfully!");
+            } else {
+                JOptionPane.showMessageDialog(panel, "Error: Customer information not found!");
+            }
+        });
+        
         gbc.gridx = 1;
         gbc.gridy = labels.length;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        JButton updateButton = new JButton("Update Profile");
         formPanel.add(updateButton, gbc);
         
-        panel.add(formPanel, BorderLayout.CENTER);
-        
-        return panel;
-    }
-    
-    private JPanel createFeedbackPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        
-        JLabel titleLabel = new JLabel("  Provide Feedback");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         panel.add(titleLabel, BorderLayout.NORTH);
-        
-        // Create feedback form
-        JPanel formPanel = new JPanel(new BorderLayout());
-        formPanel.setBackground(Color.WHITE);
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        JPanel ratingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        ratingPanel.setBackground(Color.WHITE);
-        ratingPanel.add(new JLabel("Rating: "));
-        String[] ratings = {"5 - Excellent", "4 - Good", "3 - Average", "2 - Poor", "1 - Very Poor"};
-        ratingPanel.add(new JComboBox<>(ratings));
-        
-        JPanel commentPanel = new JPanel(new BorderLayout());
-        commentPanel.setBackground(Color.WHITE);
-        commentPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        commentPanel.add(new JLabel("Comments:"), BorderLayout.NORTH);
-        JTextArea commentArea = new JTextArea(10, 30);
-        commentArea.setLineWrap(true);
-        commentArea.setWrapStyleWord(true);
-        commentPanel.add(new JScrollPane(commentArea), BorderLayout.CENTER);
-        
-        JButton submitButton = new JButton("Submit Feedback");
-        submitButton.setBackground(new Color(46, 134, 193));
-        submitButton.setForeground(Color.WHITE);
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.add(submitButton);
-        
-        formPanel.add(ratingPanel, BorderLayout.NORTH);
-        formPanel.add(commentPanel, BorderLayout.CENTER);
-        formPanel.add(buttonPanel, BorderLayout.SOUTH);
-        
         panel.add(formPanel, BorderLayout.CENTER);
         
         return panel;
