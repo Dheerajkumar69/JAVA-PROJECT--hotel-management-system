@@ -1606,7 +1606,7 @@ class CustomerDashboard extends JFrame {
                 bookingDialog.dispose();
                 
                 // Refresh the rooms panel
-                contentPanel.remove(panel);
+                contentPanel.remove(contentPanel.getComponent(1)); // Remove "Browse Rooms" panel
                 contentPanel.add(createBrowseRoomsPanel(), "Browse Rooms");
                 switchPanel("Browse Rooms");
             });
